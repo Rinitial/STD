@@ -11,7 +11,7 @@ using namespace std;
 
 typedef struct Simpul* adrSimpul;
 typedef struct Sisi* adrSisi;
-
+//s
 struct Simpul {
     string info;
     adrSimpul simpulBerikut;
