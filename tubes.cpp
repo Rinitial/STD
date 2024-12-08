@@ -98,8 +98,128 @@ adrSimpul cariLokasi(graf G, string tempat) {
 }
 
 void ruteTerpendek(graf G, string awal, string akhir) {
-    
+    // Array untuk menyimpan jarak ke simpul
+    int jarak[100];  // Asumsi jumlah simpul tidak lebih dari 100
+    // Array untuk menyimpan simpul sebelumnya dalam rute terpendek
+    string prev[100];  
+    // Array untuk menandakan apakah simpul sudah diproses
+    bool processed[100] = {false}; 
+
+    // Inisialisasi jarak untuk semua simpul
+    adrSimpul temp = G.first;
+    int idx = 0;
+    while (temp != NULL) {
+        jarak[idx] = 999999;  // Set jarak semua simpul ke nilai besar (tak terhingga)
+        prev[idx] = "";  // Set simpul sebelumnya ke NULL
+        temp = simpulBerikut(temp);
+        idx++;
+    }
+
+    // Set jarak simpul awal ke 0
+    idx = 0;
+    temp = G.first;
+    while (temp != NULL) {
+        if (info(temp) == awal) {
+            jarak[idx] = 0;
+            break;
+        }
+        temp = simpulBerikut(temp);
+        idx++;
+    }
+
+    // Algoritma Dijkstra (dengan pendekatan array)
+    while (true) {
+        // Cari simpul dengan jarak terpendek yang belum diproses
+        int minJarak = 999999;
+        int minIdx = -1;
+        temp = G.first;
+        idx = 0;
+        while (temp != NULL) {
+            if (!processed[idx] && jarak[idx] < minJarak) {
+                minJarak = jarak[idx];
+                minIdx = idx;
+            }
+            temp = simpulBerikut(temp);
+            idx++;
+        }
+
+        if (minIdx == -1) break; // Jika tidak ada simpul lagi yang perlu diproses
+
+        // Tandai simpul tersebut sudah diproses
+        processed[minIdx] = true;
+
+        // Ambil simpul yang dipilih
+        temp = G.first;
+        idx = 0;
+        while (temp != NULL && idx != minIdx) {
+            temp = simpulBerikut(temp);
+            idx++;
+        }
+
+        // Perbarui jarak untuk tetangga simpul
+        adrSisi sisi = sisiPertama(temp);
+        while (sisi != NULL) {
+            int tetanggaIdx = -1;
+            adrSimpul tetangga = simpulTujuan(sisi);
+            idx = 0;
+            adrSimpul temp2 = G.first;
+            while (temp2 != NULL) {
+                if (info(temp2) == info(tetangga)) {
+                    tetanggaIdx = idx;
+                    break;
+                }
+                temp2 = simpulBerikut(temp2);
+                idx++;
+            }
+
+            if (tetanggaIdx != -1) {
+                int jarakBaru = jarak[minIdx] + info(sisi);
+                if (jarakBaru < jarak[tetanggaIdx]) {
+                    jarak[tetanggaIdx] = jarakBaru;
+                    prev[tetanggaIdx] = info(temp);
+                }
+            }
+
+            sisi = next(sisi);
+        }
+    }
+
+    // Rekonstruksi rute terpendek
+    idx = 0;
+    temp = G.first;
+    while (temp != NULL) {
+        if (info(temp) == akhir) {
+            break;
+        }
+        temp = simpulBerikut(temp);
+        idx++;
+    }
+
+    if (jarak[idx] == 999999) {
+        cout << "Tidak ada rute terpendek dari " << awal << " ke " << akhir << endl;
+    } else {
+        cout << "Rute terpendek dari " << awal << " ke " << akhir << ": ";
+        string path = akhir;
+        while (prev[idx] != "") {
+            path = prev[idx] + " -> " + path;
+            // Mencari simpul sebelumnya
+            temp = G.first;
+            while (temp != NULL) {
+                if (info(temp) == prev[idx]) {
+                    break;
+                }
+                temp = simpulBerikut(temp);
+            }
+            idx = 0;
+            while (temp != NULL) {
+                temp = simpulBerikut(temp);
+                idx++;
+            }
+        }
+        cout << path << endl;
+    }
 }
+
 
 void tampilkanGraf(const graf& G) {
     adrSimpul temp = G.first;
