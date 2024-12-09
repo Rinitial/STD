@@ -115,7 +115,7 @@ void ruteTerpendek(graf G, string awal, string akhir) {
         idx++;
     }
 
-    // Set jarak simpul awal ke 0
+    
     idx = 0;
     temp = G.first;
     while (temp != NULL) {
