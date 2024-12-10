@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#define INT_MAX 2147483647 // Nilai maksimum untuk integer 32-bit
 using namespace std;
 
 #define info(P) P->info
@@ -98,127 +99,94 @@ adrSimpul cariLokasi(graf G, string tempat) {
 }
 
 void ruteTerpendek(graf G, string awal, string akhir) {
-    // Array untuk menyimpan jarak ke simpul
-    int jarak[100];  // Asumsi jumlah simpul tidak lebih dari 100
-    // Array untuk menyimpan simpul sebelumnya dalam rute terpendek
-    string prev[100];  
-    // Array untuk menandakan apakah simpul sudah diproses
-    bool processed[100] = {false}; 
+    adrSimpul Awal = cariLokasi(G, awal);
+    adrSimpul Akhir = cariLokasi(G, akhir);
 
-    // Inisialisasi jarak untuk semua simpul
-    adrSimpul temp = G.first;
-    int idx = 0;
-    while (temp != NULL) {
-        jarak[idx] = 999999;  // Set jarak semua simpul ke nilai besar (tak terhingga)
-        prev[idx] = "";  // Set simpul sebelumnya ke NULL
-        temp = simpulBerikut(temp);
-        idx++;
+    if (Awal == NULL || Akhir == NULL) {
+        cout << "Error: Tempat awal atau akhir tidak ditemukan." << endl;
+        return;
     }
 
-    
-    idx = 0;
-    temp = G.first;
-    while (temp != NULL) {
-        if (info(temp) == awal) {
-            jarak[idx] = 0;
-            break;
-        }
-        temp = simpulBerikut(temp);
-        idx++;
+    const int MAX_SIMPUL = 100;
+    int jarak[MAX_SIMPUL];
+    bool visited[MAX_SIMPUL];
+    adrSimpul simpulArray[MAX_SIMPUL];
+    int predecessor[MAX_SIMPUL]; // Untuk melacak jalur
+    int idxAwal = -1, idxAkhir = -1;
+
+    int jumlahSimpul = 0;
+    adrSimpul current = first(G);
+    while (current != NULL) {
+        simpulArray[jumlahSimpul] = current;
+        jarak[jumlahSimpul] = INT_MAX;
+        visited[jumlahSimpul] = false;
+        predecessor[jumlahSimpul] = -1; // Tidak ada predecessor
+        if (current == Awal) idxAwal = jumlahSimpul;
+        if (current == Akhir) idxAkhir = jumlahSimpul;
+        jumlahSimpul++;
+        current = simpulBerikut(current);
     }
 
-    // Algoritma Dijkstra (dengan pendekatan array)
-    while (true) {
-        // Cari simpul dengan jarak terpendek yang belum diproses
-        int minJarak = 999999;
-        int minIdx = -1;
-        temp = G.first;
-        idx = 0;
-        while (temp != NULL) {
-            if (!processed[idx] && jarak[idx] < minJarak) {
-                minJarak = jarak[idx];
-                minIdx = idx;
+    jarak[idxAwal] = 0;
+
+    for (int i = 0; i < jumlahSimpul; ++i) {
+        int minJarak = INT_MAX;
+        int idxMin = -1;
+
+        for (int j = 0; j < jumlahSimpul; ++j) {
+            if (!visited[j] && jarak[j] < minJarak) {
+                minJarak = jarak[j];
+                idxMin = j;
             }
-            temp = simpulBerikut(temp);
-            idx++;
         }
 
-        if (minIdx == -1) break; // Jika tidak ada simpul lagi yang perlu diproses
+        if (idxMin == -1) break;
+        visited[idxMin] = true;
 
-        // Tandai simpul tersebut sudah diproses
-        processed[minIdx] = true;
-
-        // Ambil simpul yang dipilih
-        temp = G.first;
-        idx = 0;
-        while (temp != NULL && idx != minIdx) {
-            temp = simpulBerikut(temp);
-            idx++;
-        }
-
-        // Perbarui jarak untuk tetangga simpul
-        adrSisi sisi = sisiPertama(temp);
+        adrSisi sisi = sisiPertama(simpulArray[idxMin]);
         while (sisi != NULL) {
-            int tetanggaIdx = -1;
-            adrSimpul tetangga = simpulTujuan(sisi);
-            idx = 0;
-            adrSimpul temp2 = G.first;
-            while (temp2 != NULL) {
-                if (info(temp2) == info(tetangga)) {
-                    tetanggaIdx = idx;
+            int idxTetangga = -1;
+            for (int k = 0; k < jumlahSimpul; ++k) {
+                if (simpulArray[k] == simpulTujuan(sisi)) {
+                    idxTetangga = k;
                     break;
                 }
-                temp2 = simpulBerikut(temp2);
-                idx++;
             }
-
-            if (tetanggaIdx != -1) {
-                int jarakBaru = jarak[minIdx] + info(sisi);
-                if (jarakBaru < jarak[tetanggaIdx]) {
-                    jarak[tetanggaIdx] = jarakBaru;
-                    prev[tetanggaIdx] = info(temp);
+            if (idxTetangga != -1 && !visited[idxTetangga]) {
+                int jarakBaru = jarak[idxMin] + info(sisi);
+                if (jarakBaru < jarak[idxTetangga]) {
+                    jarak[idxTetangga] = jarakBaru;
+                    predecessor[idxTetangga] = idxMin; // Simpan jalur
                 }
             }
-
             sisi = next(sisi);
         }
     }
 
-    // Rekonstruksi rute terpendek
-    idx = 0;
-    temp = G.first;
-    while (temp != NULL) {
-        if (info(temp) == akhir) {
-            break;
-        }
-        temp = simpulBerikut(temp);
-        idx++;
-    }
-
-    if (jarak[idx] == 999999) {
-        cout << "Tidak ada rute terpendek dari " << awal << " ke " << akhir << endl;
+    if (jarak[idxAkhir] == INT_MAX) {
+        cout << "Tidak ada rute dari " << awal << " ke " << akhir << "." << endl;
     } else {
-        cout << "Rute terpendek dari " << awal << " ke " << akhir << ": ";
-        string path = akhir;
-        while (prev[idx] != "") {
-            path = prev[idx] + " -> " + path;
-            // Mencari simpul sebelumnya
-            temp = G.first;
-            while (temp != NULL) {
-                if (info(temp) == prev[idx]) {
-                    break;
-                }
-                temp = simpulBerikut(temp);
-            }
-            idx = 0;
-            while (temp != NULL) {
-                temp = simpulBerikut(temp);
-                idx++;
-            }
+        cout << "Rute Terpendek dari " << awal << " ke " << akhir << " melalui jalan berikut:" << endl;
+
+        // Rekonstruksi jalur dari predecessor
+        int path[MAX_SIMPUL];
+        int pathIdx = 0;
+        for (int idx = idxAkhir; idx != -1; idx = predecessor[idx]) {
+            path[pathIdx++] = idx;
         }
-        cout << path << endl;
+
+        // Cetak jalur dari awal ke akhir
+        for (int i = pathIdx - 1; i >= 0; --i) {
+            cout << info(simpulArray[path[i]]);
+            if (i > 0) cout << " - ";
+        }
+        cout << endl;
+
+        cout << "Dengan total jarak = " << jarak[idxAkhir] << "." << endl;
     }
 }
+
+
 
 
 void tampilkanGraf(const graf& G) {
