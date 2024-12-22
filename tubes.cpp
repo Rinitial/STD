@@ -275,7 +275,10 @@ void hapusLokasi(graf &G, string simpul) {
 
 int main() {
     graf G;
+    graf alternatif;
+    initialGraf(alternatif);
     initialGraf(G);
+
 
     int pilihan;
     do {
