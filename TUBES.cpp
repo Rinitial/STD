@@ -275,7 +275,10 @@ void hapusLokasi(graf &G, string simpul) {
 
 int main() {
     graf G;
+    graf alternatif;
+    initialGraf(alternatif);
     initialGraf(G);
+
 
     int pilihan;
     do {
@@ -338,12 +341,22 @@ int main() {
                 break;
 
             case 4: {
-                string asal, tujuan;
+                string asal, tujuan, b, a;
                 cout << "Masukkan tempat asal: ";
                 cin >> asal;
                 cout << "Masukkan tempat tujuan: ";
                 cin >> tujuan;
-                ruteTerpendek(G, asal, tujuan);
+                cout << "Apakah ada tempat yang bermasalah? Y/N" << endl;
+                cin >> a;
+                if (a == "Y"){
+                    cout << "Masukkan nama tempat yang ingin dihapus: ";
+                    cin >> b;
+                    hapusLokasi(G, b);
+                    ruteTerpendek(G, asal, tujuan);
+                } else if (a == "N"){
+                    ruteTerpendek(G, asal, tujuan);
+                }
+                
                 break;
             }
 
